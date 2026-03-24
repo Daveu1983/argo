@@ -1,0 +1,3 @@
+env: feature-xyz
+namespace: venv-feature-xyz
+overlay: dev
