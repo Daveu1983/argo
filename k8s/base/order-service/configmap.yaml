@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: order-service-config
+  labels:
+    app: order-service
+    app.kubernetes.io/name: order-service
+    app.kubernetes.io/part-of: microservices
+data:
+  SERVICE_NAME: "order-service"
+  ENVIRONMENT: "base"
+  PORT: "8082"
+  DB_HOST: "postgres"
+  DB_PORT: "5432"
+  DB_NAME: "orders"
+  USER_SERVICE_URL: "http://user-service:8081"

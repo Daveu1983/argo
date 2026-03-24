@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  labels:
+    app: order-service
+    app.kubernetes.io/name: order-service
+    app.kubernetes.io/part-of: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+        app.kubernetes.io/name: order-service
+    spec:
+      containers:
+        - name: order-service
+          image: nginx:alpine
+          ports:
+            - containerPort: 8082
+          envFrom:
+            - configMapRef:
+                name: order-service-config
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8082
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8082
+            initialDelaySeconds: 15
+            periodSeconds: 20

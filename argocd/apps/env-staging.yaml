@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: microservices-staging
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    env: staging
+    app.kubernetes.io/part-of: microservices
+spec:
+  project: microservices
+
+  source:
+    repoURL: https://github.com/daveu1983/argo
+    targetRevision: HEAD
+    path: k8s/overlays/staging
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: venv-staging
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

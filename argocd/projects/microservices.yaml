@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: microservices
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: "Microservices project — manages all virtual environment deployments"
+
+  sourceRepos:
+    - "*"
+
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: "venv-*"
+
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: "apps"
+      kind: Deployment
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: ServiceAccount
+
+  syncWindows: []
+
+  orphanedResources:
+    warn: true

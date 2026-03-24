@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  labels:
+    app: notification-service
+    app.kubernetes.io/name: notification-service
+    app.kubernetes.io/part-of: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+        app.kubernetes.io/name: notification-service
+    spec:
+      containers:
+        - name: notification-service
+          image: nginx:alpine
+          ports:
+            - containerPort: 8083
+          envFrom:
+            - configMapRef:
+                name: notification-service-config
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8083
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8083
+            initialDelaySeconds: 15
+            periodSeconds: 20

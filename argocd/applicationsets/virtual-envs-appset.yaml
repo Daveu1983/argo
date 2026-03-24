@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: virtual-envs
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/daveu1983/argo
+        revision: HEAD
+        files:
+          - path: "virtual-envs/*.yaml"
+
+  template:
+    metadata:
+      name: "microservices-{{env}}"
+      namespace: argocd
+      labels:
+        env: "{{env}}"
+        app.kubernetes.io/part-of: microservices
+        managed-by: applicationset
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: microservices
+
+      source:
+        repoURL: https://github.com/daveu1983/argo
+        targetRevision: HEAD
+        path: "k8s/overlays/{{overlay}}"
+
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{namespace}}"
+
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
