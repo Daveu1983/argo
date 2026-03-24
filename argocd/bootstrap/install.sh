@@ -8,8 +8,29 @@ echo "==> Creating argocd namespace..."
 kubectl apply -f "${REPO_ROOT}/argocd/bootstrap/argocd-namespace.yaml"
 
 echo "==> Installing ArgoCD (version: ${ARGOCD_VERSION})..."
-kubectl apply -n argocd \
-  -f "https://raw.githubusercontent.com/argoproj/argo-cd/${ARGOCD_VERSION}/manifests/install.yaml"
+INSTALL_MANIFEST="https://raw.githubusercontent.com/argoproj/argo-cd/${ARGOCD_VERSION}/manifests/install.yaml"
+
+# Resolve the exact image tag being used
+ARGOCD_IMAGE=$(curl -sSL "${INSTALL_MANIFEST}" | grep 'image: quay.io/argoproj/argocd' | head -1 | awk '{print $2}')
+echo "==> ArgoCD image: ${ARGOCD_IMAGE}"
+
+# Pre-pull the image and load it into the local cluster to avoid registry access at runtime
+echo "==> Pre-pulling image via Docker..."
+docker pull "${ARGOCD_IMAGE}"
+
+if kubectl config current-context | grep -q '^kind-'; then
+  CLUSTER_NAME=$(kubectl config current-context | sed 's/^kind-//')
+  echo "==> Loading image into kind cluster '${CLUSTER_NAME}'..."
+  kind load docker-image "${ARGOCD_IMAGE}" --name "${CLUSTER_NAME}"
+elif kubectl config current-context | grep -q '^k3d-'; then
+  CLUSTER_NAME=$(kubectl config current-context | sed 's/^k3d-//')
+  echo "==> Loading image into k3d cluster '${CLUSTER_NAME}'..."
+  k3d image import "${ARGOCD_IMAGE}" --cluster "${CLUSTER_NAME}"
+else
+  echo "==> Skipping image load (not a kind/k3d cluster — assuming registry is reachable)"
+fi
+
+curl -sSL "${INSTALL_MANIFEST}" | kubectl apply --server-side -n argocd -f -
 
 echo "==> Waiting for ArgoCD server to be ready..."
 kubectl rollout status deployment/argocd-server -n argocd --timeout=300s
